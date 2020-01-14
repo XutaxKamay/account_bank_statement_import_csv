@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*
 
 import logging
-from io import StringIO
+import io
 import codecs
 import hashlib
 import dateutil.parser
@@ -23,6 +23,7 @@ except ImportError:
     _logger.debug("chardet not found.")
     chardet = None
 
+
 class AccountBankStatementImport(models.TransientModel):
     _inherit = 'account.bank.statement.import'
 
@@ -32,11 +33,11 @@ class AccountBankStatementImport(models.TransientModel):
             return False
         if not unicodecsv:
             return False
-        try:            
+        try:
             if not data_file.name.enswith('.csv'):
                 return False
-            csv = unicodecsv.DictReader(data_file, delimiter=',', quotechar='"',
-                                         encoding='utf-8')
+            csv = unicodecsv.DictReader(data_file, delimiter=';', quotechar='"',
+                                        encoding='utf-8')
         except Exception as e:
             _logger.debug(e)
             return False
@@ -67,7 +68,7 @@ class AccountBankStatementImport(models.TransientModel):
         if data_file[:3] == codecs.BOM_UTF8:
             data_file = data_file[3:]
 
-        csv = self._check_csv(StringIO.StringIO(data_file))
+        csv = self._check_csv(data_file)
         if not csv:
             return super(AccountBankStatementImport, self)._parse_file(
                 data_file)
@@ -90,7 +91,8 @@ class AccountBankStatementImport(models.TransientModel):
                 if not currency and line['currency']:
                     currency = line['currency']
                 if currency and currency != line['currency']:
-                    raise UserError(_('Bank statement line must same currency.'))
+                    raise UserError(
+                        _('Bank statement line must same currency.'))
                 if not account_number and line['account_number']:
                     account_number = line['account_number']
                 if account_number and account_number != line['account_number']:
